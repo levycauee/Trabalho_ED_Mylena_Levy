@@ -4,15 +4,17 @@
 #include <stdexcept>
 #include "SparseMatrix.h"
 
+using namespace std;
+
 // Função para exibir os comandos disponíveis
 void exibirAjuda() {
-    std::cout << "\nComandos disponíveis:" << std::endl;
-    std::cout << "1. 'inserir <linha> <coluna> <valor>' - Insere um valor na matriz na posicao (linha, coluna)" << std::endl;
+    cout << "\nComandos disponíveis:" << std::endl;
+    cout << "1. 'inserir <linha> <coluna> <valor>' - Insere um valor na matriz na posicao (linha, coluna)" << std::endl;
     std::cout << "2. 'obter <linha> <coluna>' - Obtem o valor da matriz na posicao (linha, coluna)" << std::endl;
     std::cout << "3. 'imprimir' - Exibe a matriz esparsa" << std::endl;
     std::cout << "4. 'ajuda' - Exibe este menu de ajuda" << std::endl;
     std::cout << "5. 'sair' - Encerra o programa" << std::endl;
-    std::cout << "6. 'ler <nome_arquivo>' - Lê uma matriz esparsa de um arquivo" << std::endl;
+    std::cout << "6. 'ler <nome_arquivo>' - Le uma matriz esparsa de um arquivo" << std::endl;
     std::cout << "7. 'somar' - Soma duas matrizes esparsas" << std::endl;
     std::cout << "8. 'multiplicar' - Multiplica duas matrizes esparsas" << std::endl;
 }
@@ -47,7 +49,7 @@ SparseMatrix sum(SparseMatrix& A, SparseMatrix& B) {
         throw std::invalid_argument("As matrizes devem ter as mesmas dimensões para a soma.");
     }
 
-    SparseMatrix C(A.getLinhasMatriz(), A.getColunasMatriz());
+    SparseMatrix C(A.getLinhasMatriz(), A.getColunasMatriz());//cria a matriz C (resultado de A + B)
 
     for (int i = 1; i <= A.getLinhasMatriz(); ++i) {
         for (int j = 1; j <= A.getColunasMatriz(); ++j) {
@@ -85,11 +87,10 @@ SparseMatrix multiply(SparseMatrix& A, SparseMatrix& B) {
 }
 
 int main() {
-    SparseMatrix mat(3, 3);
-    SparseMatrix matB(3, 3); // Segunda matriz esparsa para operações de soma e multiplicação
+    SparseMatrix mat(3, 3); //matriz inicial
+    SparseMatrix matB(3, 3); //matriz secundária
     std::string comando;
 
-    std::cout << "Bem-vindo ao programa de Matriz Esparsa!" << std::endl;
     exibirAjuda();
 
     while (true) {
@@ -97,7 +98,7 @@ int main() {
         std::getline(std::cin, comando);
 
         if (comando == "sair") {
-            std::cout << "Saindo do programa..." << std::endl;
+            std::cout << "Saindo do programa...";
             break;
         } else if (comando == "ajuda") {
             exibirAjuda();
@@ -131,7 +132,7 @@ int main() {
         } else if (comando == "imprimir") {
             // Comando para imprimir a matriz
             std::cout << "\nMatriz esparsa: " << std::endl;
-            mat.print();
+            mat.printar_matrizEsparsa();
         } else if (comando.rfind("ler", 0) == 0) {
             // Comando para ler matriz de arquivo
             std::string nome_arquivo;
@@ -145,7 +146,7 @@ int main() {
             try {
                 SparseMatrix resultado = sum(mat, matB);
                 std::cout << "Resultado da soma:" << std::endl;
-                resultado.print();
+                resultado.printar_matrizEsparsa();
             } catch (const std::exception& e) {
                 std::cerr << "Erro: " << e.what() << std::endl;
             }
@@ -154,9 +155,14 @@ int main() {
             try {
                 SparseMatrix resultado = multiply(mat, matB);
                 std::cout << "Resultado da multiplicação:" << std::endl;
-                resultado.print();
-            } catch (const std::exception& e) {
+                resultado.printar_matrizEsparsa();
+            } catch (std::exception& e) {
                 std::cerr << "Erro: " << e.what() << std::endl;
+            }
+            else if(comando == "remover valor"){
+                try{
+                    //dps termino
+                }
             }
         } else {
             std::cerr << "Comando não reconhecido. Digite 'ajuda' para listar os comandos disponíveis." << std::endl;
