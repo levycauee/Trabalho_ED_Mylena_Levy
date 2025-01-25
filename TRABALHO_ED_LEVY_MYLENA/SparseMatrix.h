@@ -5,132 +5,206 @@
 #include <stdexcept>
 #include <string>
 
-//definicão do nó para as listas ( colunas e linhas da matriz)
+// Estrutura que define o nó usado nas listas de linhas e colunas
 struct Node {
-    Node* DIREITA; //aponta para o próximo elemento da mesma LINHA de uma matriz;
-    Node* ABAIXO;  //aponta para o próximo elemento da mesma COLUNA de uma matriz;
-    int LINHA;     //linha da matriz onde o valor está guardado;
-    int COLUNA;    //coluna da matriz onde o valor está guardado;
-    double VALOR;  //valor que está armazenado em posicao(LINHA, COLUNA);
+    Node* DIREITA; // Ponteiro para o próximo nó na mesma linha
+    Node* ABAIXO;  // Ponteiro para o próximo nó na mesma coluna
+    int LINHA;     // Índice da linha onde o valor está localizado
+    int COLUNA;    // Índice da coluna onde o valor está localizado
+    double VALOR;  // Valor armazenado na célula da matriz
 };
 
-// Classe que representa uma matriz esparsa usando listas encadeadas
+// Classe que representa uma matriz esparsa usando listas circulares encadeadas
 class SparseMatrix {
 private:
-    int LINHA_MATRIZ;  // Número de linhas da matriz
-    int COLUNA_MATRIZ;  // Número de colunas da matriz
-    Node** LINHAS_LISTA; // Vetor de ponteiros para as listas de linhas
-    Node** COLUNAS_LISTA; // Vetor de ponteiros para as listas de colunas
+    int LINHA_MATRIZ;  // Número total de linhas da matriz
+    int COLUNA_MATRIZ; // Número total de colunas da matriz
+    Node** LINHAS_LISTA; // Vetor de ponteiros para listas que representam as linhas
+    Node** COLUNAS_LISTA; // Vetor de ponteiros para listas que representam as colunas
 
-    // Função auxiliar para verificar a validade dos índices
+    //verifica se os índices são válidos
     void verificarIndices(int i, int j) {
-        if (i < 1 || i > COLUNA_MATRIZ || j < 1 || j > LINHA_MATRIZ) {
-            throw std::out_of_range("Índices inválidos");
+        if (i < 1 || i > LINHA_MATRIZ || j < 1 || j > COLUNA_MATRIZ) {
+            throw std::out_of_range("Índices inválidos"); // Lança exceção se índices forem inválidos
         }
     }
 
 public:
-    //Construtor da classe. Inicializa uma matriz esparsa vazia com capacidade para m
-    //linhas e n colunas. Essa funcao deve checar se os valores passados sao validos (se
-    //sao inteiros positivos, ou seja m > 0 e m > 0); se nao forem, uma excecao deve ser
-    //lancada.
+
+    // Construtor da classe SparseMatrix
+    // Inicializa uma matriz esparsa vazia com m linhas e n colunas
+    // Lança exceção se m ou n forem menores ou iguais a 0
+    // q1
     SparseMatrix(int m, int n) {
-        //se o número de linhas ou colunas for menor ou igual a 0
-        //gera uma exceção
         if (m <= 0 || n <= 0) {
-            throw std::invalid_argument("Número de linhas e colunas deve ser positivo");
+            throw std::invalid_argument("Numero de linhas e colunas deve ser maior que zero");
         }
 
-        this->LINHA_MATRIZ = m; //linhas da matriz recebe o número de linhas que o usuário colocou
-        this->COLUNA_MATRIZ = n; //colunas da matriz recebe o número de linhas que o usuário colocou
+        // Inicializa o número de linhas e colunas da matriz
+        LINHA_MATRIZ = m;
+        COLUNA_MATRIZ = n;
 
-        LINHAS_LISTA = new Node*[m + 1]; //cria um novo nó com as linhas da lista que o usuário colocou ( coloquei +1 pois a SparseMatrix começa do ínidice 1)
-        COLUNAS_LISTA = new Node*[n + 1]; //cria um novo nó com as colunas da lista que o usuário colocou ( coloquei +1 pois a SparseMatrix começa do ínidice 1)
-        
-        for (int i = 1; i <= m; ++i) {
-            LINHAS_LISTA[i] = new Node{nullptr, nullptr, i, 0, 0}; //inicializa os nós (ou a própria lista), ou seja, inicializa as linhas da nossa matriz esparca
-        }                             //nullptr são para os ponteiros que vão servir para a locomoção dentro das listas (não podem apontar pra nenhum valor), o i é incrementado a cada loop, coluna e valor não importam aqui, então inicializei com 0.
-        for (int j = 1; j <= n; ++j) {
-            COLUNAS_LISTA[j] = new Node{nullptr, nullptr, 0, j, 0}; //inicializa os nós (ou a própria lista), ou seja, inicializa as colunas da nossa matriz esparca
-        }                             //nullptr são para os ponteiros que vão servir para a locomoção dentro das listas( não podem apontar pra nenhum valor), o i é incrementado a cada loop, linha e valor não importam aqui, então inicializei com 0.
-    }
+        // Aloca memória para as listas de linhas e colunas, mas não para arrays
+        LINHAS_LISTA = new Node*[LINHA_MATRIZ + 1];  // Um índice extra para simplificar a indexação
+        COLUNAS_LISTA = new Node*[COLUNA_MATRIZ + 1]; // Um índice extra para simplificar a indexação
 
-    //Segundo método: Destrutor da SparseMatrix ( Libera memória que foi alocada
-    //dinamicamente para a matriz.)
+        // Inicializa as listas de linhas e colunas com nós sentinelas
+        for (int i = 1; i <= LINHA_MATRIZ; ++i) {
+            LINHAS_LISTA[i] = new Node{nullptr, nullptr, 0, 0, 0}; // Cria um nó sentinela para cada linha
+            LINHAS_LISTA[i]->DIREITA = LINHAS_LISTA[i]; // A lista da linha aponta para si mesma (circular)
+        }
+
+        for (int j = 1; j <= COLUNA_MATRIZ; ++j) {
+            COLUNAS_LISTA[j] = new Node{nullptr, nullptr, 0, 0, 0}; // Cria um nó sentinela para cada coluna
+            COLUNAS_LISTA[j]->ABAIXO = COLUNAS_LISTA[j]; // A lista da coluna aponta para si mesma (circular)
+        }
+}
+
+    // Destrutor da classe SparseMatrix
+    // O destrutor libera toda a memória que foi alocada dinamicamente para as linhas, colunas e os nós da matriz.
+    // q2
+
     ~SparseMatrix() {
-        for (int i = 1; i <= LINHA_MATRIZ; ++i) {//itero sobre as linhas da matriz ( não importa o número de linhas)
-            Node* atual = LINHAS_LISTA[i]; //crio um ponteiro que aponta para o inicio da lista(na linha i);
-            while (atual != nullptr) {   //enquanto o ponteiro não estiver apontando para nullptr (fim das linhas da lista)      
-                Node* temp = atual;  //crio um ponteiro temporário para armazenar o nó atual
-                atual = atual->DIREITA; // pego o ponteiro que aponta para o início da lista e faço ele apontar para o próximo nó da lista, ou seja, aponta para o próximo elemento
-                delete temp; //o elemento anterior é deletado da memória
+        // Libera memória das listas de linhas
+        for (int i = 1; i <= LINHA_MATRIZ; ++i) {
+            Node* atual = LINHAS_LISTA[i]->DIREITA; // Começa no primeiro nó da linha
+            while (atual != LINHAS_LISTA[i]) { // Percorre a lista até o nó sentinela
+                Node* temp = atual;
+                atual = atual->DIREITA; // Avança para o próximo nó
+                delete temp; // Libera a memória do nó atual
             }
+            delete LINHAS_LISTA[i]; // Libera o nó sentinela da linha
         }
-        delete[] LINHAS_LISTA; //libera espaço da memória para linhas
-        delete[] COLUNAS_LISTA; //libera espaço da memória para colunas
+
+        // Libera memória das listas de colunas
+        for (int j = 1; j <= COLUNA_MATRIZ; ++j) {
+            delete COLUNAS_LISTA[j]; // Libera o nó sentinela da coluna
+        }
+
+        // Libera os vetores de ponteiros para as listas de linhas e colunas
+        delete[] LINHAS_LISTA;
+        delete[] COLUNAS_LISTA;
     }
 
-    // Insere um valor na posição (i, j) da matriz
+    // Função que insere ou atualiza um valor na posição (i, j)
+    // Se o valor for 0, não faz nada
+    // q3
     void insert(int i, int j, double value) {
-        verificarIndices(i, j);  //verifica se i/j são maiores ou iguais a 0
+        verificarIndices(i, j); // Verifica se os índices são válidos
 
-        if (value == 0) return; //se for 0 não faz nada por que já foi inicializado com 0
-        Node* novo = new Node{nullptr, nullptr, i, j, value}; //cria uma nova matriz para atribuir o novo valor
-
-        //inserção na lista da linha i
-        Node* linha = LINHAS_LISTA[i]; //cria um ponteiro que aponta para as linhas da lista
-        while (linha->DIREITA && linha->DIREITA->COLUNA < j) { //enquanto o nó apontar para o próximo elemento da linha e o próximo elemento na POS linha,coluna for maior que j
-            linha = linha->DIREITA; //o nó vai apontar para o próximo elemento da lista.
-            
+        if (value == 0) { // Se o valor for 0, não faz nada
+            return;
         }
-        novo->DIREITA = linha->DIREITA; //a nova matriz recebe os elementos da lista
-        linha->DIREITA = novo; // os elementos são atribuidos a nova matriz resultante 
 
-        // Inserção na lista da coluna j
+        // Percorre a lista da linha para encontrar a posição correta
+        Node* linha = LINHAS_LISTA[i];
+        while (linha->DIREITA != LINHAS_LISTA[i] && linha->DIREITA->COLUNA < j) {
+            linha = linha->DIREITA; // Avança para o próximo nó
+        }
+
+        // Se o valor já existe, atualiza o valor
+        if (linha->DIREITA != LINHAS_LISTA[i] && linha->DIREITA->COLUNA == j) {
+            linha->DIREITA->VALOR = value;
+            return;
+        }
+
+        // Caso contrário, cria um novo nó para o valor
+        Node* novo = new Node{nullptr, nullptr, i, j, value};
+        novo->DIREITA = linha->DIREITA; // Ajusta o ponteiro para a direita na linha
+        linha->DIREITA = novo;
+
+        // Percorre a coluna para ajustar os ponteiros verticais
         Node* coluna = COLUNAS_LISTA[j];
-        while (coluna->ABAIXO && coluna->ABAIXO->LINHA < i) {
-            coluna = coluna->ABAIXO;
+        while (coluna->ABAIXO != COLUNAS_LISTA[j] && coluna->ABAIXO->LINHA < i) {
+            coluna = coluna->ABAIXO; // Avança para o próximo nó na coluna
         }
-        novo->ABAIXO = coluna->ABAIXO;
+
+        novo->ABAIXO = coluna->ABAIXO; // Ajusta o ponteiro para baixo na coluna
         coluna->ABAIXO = novo;
     }
 
-    // Retorna o valor na posição (i, j)
+    // Função que retorna o valor na célula (i, j) da matriz
+    // Se a célula não existir, retorna 0
+    //q5
     double get(int i, int j) {
         verificarIndices(i, j); // Verifica se os índices são válidos
 
-        Node* linha = LINHAS_LISTA[i];
-        while (linha && linha->COLUNA < j) {
-            linha = linha->DIREITA;
+        // Percorre a lista da linha para encontrar o valor
+        Node* linha = LINHAS_LISTA[i]->DIREITA;
+        while (linha != LINHAS_LISTA[i] && linha->COLUNA < j) {
+            linha = linha->DIREITA; // Avança para o próximo nó na linha
         }
 
-        if (linha && linha->COLUNA == j) {
+        // Se o valor foi encontrado, retorna o valor
+        if (linha != LINHAS_LISTA[i] && linha->COLUNA == j) {
             return linha->VALOR;
         }
-        return 0; // Retorna 0 se a posição for vazia
+
+        return 0; // Retorna 0 se o valor não for encontrado
     }
 
-    // Imprime a matriz esparsa no terminal
-    void print() {
+    // Função que imprime a matriz esparsa no terminal
+    // Imprime todos os valores da matriz, incluindo os zeros
+    // q5
+    void printar_matrizEsparsa() {
+        // Percorre todas as linhas
         for (int i = 1; i <= LINHA_MATRIZ; ++i) {
-            Node* linha = LINHAS_LISTA[i]->DIREITA;
+            Node* linha = LINHAS_LISTA[i]->DIREITA; // Começa no primeiro nó da linha
             for (int j = 1; j <= COLUNA_MATRIZ; ++j) {
-                if (linha && linha->COLUNA == j) {
-                    std::cout << linha->VALOR << " ";
-                    linha = linha->DIREITA;
+                if (linha != LINHAS_LISTA[i] && linha->COLUNA == j) {
+                    std::cout << linha->VALOR << " "; // Imprime o valor se a célula não for zero
+                    linha = linha->DIREITA; // Avança para o próximo nó na linha
                 } else {
-                    std::cout << "0 ";
+                    std::cout << "0 "; // Imprime 0 para células vazias
                 }
             }
-            std::cout << std::endl;
+            std::cout << std::endl; // Nova linha após imprimir uma linha da matriz
         }
     }
 
-    //getter para LINHAS da MATRIZ
-    int getLinhasMatriz() const { return LINHA_MATRIZ; }
+ void remover_valor(int m, int n, double value) {//chat ajudou
+    verificarIndices(m, n); // Verifica se os índices m, n são válidos
 
-    //getter para COLUNAS da MATRIZ
-    int getColunasMatriz() const { return COLUNA_MATRIZ; }
+    // Percorre todas as linhas da matriz
+    for (int i = 1; i <= LINHA_MATRIZ; ++i) {
+        Node* linha = LINHAS_LISTA[i]->DIREITA; // Começa a lista da linha
+
+        // Percorre todas as colunas da linha
+        while (linha != LINHAS_LISTA[i]) {
+            // Verifica se o valor do nó é igual ao valor que deve ser removido
+            if (linha->VALOR == value) {
+                // Remover o nó da lista da linha
+                Node* temp = linha;
+                linha = linha->DIREITA; // Avança para o próximo nó da linha
+                // Ajusta o ponteiro para desconectar o nó da lista
+                temp->DIREITA = temp->DIREITA->DIREITA;
+
+                // Agora, remova o nó da lista da coluna
+                Node* coluna = COLUNAS_LISTA[temp->COLUNA];
+                while (coluna->ABAIXO != COLUNAS_LISTA[temp->COLUNA] && coluna->ABAIXO->LINHA != temp->LINHA) {
+                    coluna = coluna->ABAIXO; // Avança na lista da coluna
+                }
+
+                // Ajusta o ponteiro da coluna para desconectar o nó
+                coluna->ABAIXO = coluna->ABAIXO->ABAIXO;
+
+                // Libera a memória do nó removido
+                delete temp;
+            } else {
+                linha = linha->DIREITA; // Avança para o próximo nó na linha
+            }
+        }
+    }
+}
+
+
+    // getters para o número de linhas e colunas
+    int getLinhasMatriz()  { 
+        return LINHA_MATRIZ; 
+        }
+    int getColunasMatriz()  { 
+        return COLUNA_MATRIZ; 
+        }
 };
 
-#endif // SPARSEMATRIX_H
+#endif
