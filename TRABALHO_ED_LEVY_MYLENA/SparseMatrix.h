@@ -125,7 +125,7 @@ public:
 
     // Função que retorna o valor na célula (i, j) da matriz
     // Se a célula não existir, retorna 0
-    //q5
+    // q4
     double get(int i, int j) {
         verificarIndices(i, j); // Verifica se os índices são válidos
 
@@ -162,6 +162,7 @@ public:
         }
     }
 
+    // método a mais ( q6 )
  void remover_valor(int m, int n, double value) {//chat ajudou
     verificarIndices(m, n); // Verifica se os índices m, n são válidos
 
@@ -199,10 +200,10 @@ public:
 
 
     // getters para o número de linhas e colunas
-    int getLinhasMatriz()  { 
+    int getLinhasMatriz() const { 
         return LINHA_MATRIZ; 
         }
-    int getColunasMatriz()  { 
+    int getColunasMatriz() const { 
         return COLUNA_MATRIZ; 
         }
 };
